@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCVs } from '../store/CVContext';
 import { CVData, Certification } from '../types';
 import LZString from 'lz-string';
-import { ArrowLeft, Printer, Palette, ExternalLink, Image as ImageIcon, FileText, Download, Mail, Phone, MapPin, Link as LinkIcon, Calendar, Briefcase, GraduationCap, Wrench, Award, LayoutTemplate, Layers } from 'lucide-react';
+import { ArrowLeft, Printer, Palette, ExternalLink, Image as ImageIcon, FileText, Download, Mail, Phone, MapPin, Link as LinkIcon, Calendar, Briefcase, GraduationCap, Wrench, Award, LayoutTemplate, Layers, LayoutDashboard, FileText as FileTextIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function Viewer() {
@@ -14,12 +14,14 @@ export default function Viewer() {
   
   const [cv, setCv] = useState<CVData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'soft'>('light');
+  const [theme, setTheme] = useState<'light-futuristic' | 'dark-tech' | 'glass-minimal' | string>('dark-tech');
+  const [layoutMode, setLayoutMode] = useState<'a4' | 'bento'>('bento');
   
   useEffect(() => {
     // Load saved theme
     const savedTheme = localStorage.getItem('cv-hub-theme');
-    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'soft') {
+    const validThemes = ['light-futuristic', 'dark-tech', 'glass-minimal'];
+    if (savedTheme && validThemes.includes(savedTheme)) {
       setTheme(savedTheme);
     }
   }, []);
@@ -59,7 +61,7 @@ export default function Viewer() {
   };
 
   const cycleTheme = () => {
-    const themes = ['light', 'dark', 'soft', 'minimalist', 'material', 'flat', 'glass', 'neumorphism', 'retro', 'typographic'];
+    const themes = ['light-futuristic', 'dark-tech', 'glass-minimal'];
     const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
     setTheme(themes[nextIndex] as any);
   };
@@ -91,8 +93,15 @@ export default function Viewer() {
 
   return (
     <div className="min-h-screen bg-background relative text-foreground pb-20 print:bg-white print:text-black">
-      {/* Subtle dotted background */}
-      <div className="absolute inset-0 z-0 opacity-40 print:hidden pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--border-color) 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+      {/* Subtle technological background grid */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 print:hidden" 
+           style={{ 
+             backgroundImage: 'linear-gradient(to right, var(--border-color) 1px, transparent 1px), linear-gradient(to bottom, var(--border-color) 1px, transparent 1px)', 
+             backgroundSize: '40px 40px',
+             maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)',
+             WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)'
+           }}>
+      </div>
       
       {/* Floating Controls - Hidden in print */}
       <div className="fixed top-4 left-4 right-4 z-50 flex justify-between items-center pointer-events-none print:hidden">
@@ -105,6 +114,17 @@ export default function Viewer() {
         </button>
 
         <div className="pointer-events-auto flex items-center gap-2 bg-card/80 backdrop-blur-md border border-border rounded-full p-1 shadow-sm">
+          <button 
+            onClick={() => setLayoutMode(l => l === 'a4' ? 'bento' : 'a4')}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-background transition-all"
+            title="Toggle Layout"
+          >
+            {layoutMode === 'bento' ? <FileTextIcon className="w-4 h-4 flex-shrink-0" /> : <LayoutDashboard className="w-4 h-4 flex-shrink-0" />}
+            <span className="text-sm font-medium hidden sm:inline-block">
+              {layoutMode === 'bento' ? 'A4 View' : 'Bento View'}
+            </span>
+          </button>
+          <div className="w-px h-4 bg-border"></div>
           <button 
             onClick={cycleTheme}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-background transition-all max-w-[120px] sm:max-w-none"
@@ -125,15 +145,22 @@ export default function Viewer() {
         </div>
       </div>
 
-      {/* A4 Document Area */}
-      <div className="relative z-10 max-w-4xl mx-auto mt-24 print:mt-0 px-4 sm:px-8">
-        <div className="theme-card bg-card print:bg-white print:border-none border border-border shadow-md overflow-hidden animate-in fade-in duration-500 backdrop-blur-md relative">
-          {/* Subtle top accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-primary/80"></div>
+      {/* Main Content Area */}
+      <div className={cn("relative z-10 mx-auto mt-24 print:mt-0 px-4 sm:px-8 pb-12 transition-all duration-500", layoutMode === 'bento' ? "max-w-7xl" : "max-w-4xl")}>
+        <div className={cn("transition-all duration-500 relative", layoutMode === 'bento' ? "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" : "theme-card bg-card print:bg-white print:border-none border border-border shadow-md overflow-hidden backdrop-blur-md")}>
+          {/* Subtle top accent bar (only in A4 mode) */}
+          {layoutMode === 'a4' && <div className="absolute top-0 left-0 right-0 h-2 bg-primary/80"></div>}
           
           {/* Header Section */}
-          <header className="p-8 sm:p-12 sm:pb-10 border-b border-border/50 relative">
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-start gap-8">
+          <header className={cn("relative overflow-hidden", layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 lg:col-span-4 lg:sticky lg:top-24 border border-border/60 shadow-lg backdrop-blur-xl" : "p-8 sm:p-12 sm:pb-10 border-b border-border/50")}>
+            {/* Tech scanner line animation over header */}
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent shadow-[0_0_8px_rgba(var(--color-primary),0.8)] animate-[scan_3s_ease-in-out_infinite] print:hidden"></div>
+            
+            {/* Subtle glow effect behind header */}
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-start gap-8 relative z-10">
               <div className="flex-1">
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground print:text-black pb-1">
                   {cv.personalInfo.name}
@@ -170,21 +197,30 @@ export default function Viewer() {
                 </div>
               </div>
               {cv.personalInfo.photo && (
-                <div className="w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm border border-border mt-2 sm:mt-0 relative group">
-                  <img src={cv.personalInfo.photo} alt={cv.personalInfo.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl"></div>
+                <div className="relative group w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 mt-2 sm:mt-0">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-colors duration-500"></div>
+                  <div className="relative w-full h-full rounded-2xl overflow-hidden glass-effect border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.15)]">
+                    <img src={cv.personalInfo.photo} alt={cv.personalInfo.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 mix-blend-luminosity hover:mix-blend-normal" />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-primary/20 rounded-2xl"></div>
+                    {/* Tech corner accents */}
+                    <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary/60"></div>
+                    <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary/60"></div>
+                  </div>
                 </div>
               )}
             </div>
             
             {cv.summary && (
-              <p className="mt-8 text-base leading-relaxed text-muted print:text-black max-w-3xl">
-                {cv.summary}
-              </p>
+              <div className="mt-8 p-5 sm:p-6 bg-muted/5 border-l-4 border-primary rounded-r-xl shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                <p className="text-base leading-relaxed text-muted print:text-black relative z-10">
+                  {cv.summary}
+                </p>
+              </div>
             )}
           </header>
 
-          <div className="p-8 sm:p-12 space-y-12">
+          <div className={cn("", layoutMode === 'bento' ? "lg:col-span-8 space-y-6" : "p-8 sm:p-12 space-y-12")}>
 
             {/* Dynamic Sections from the new exhaustive structure */}
             {cv.sections && cv.sections.map((section) => {
@@ -196,13 +232,14 @@ export default function Viewer() {
               if (section.id.toLowerCase().includes('skill')) SectionIcon = Wrench;
 
               return section.items.length > 0 && (
-                <section key={section.id}>
+                <section key={section.id} className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                   <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                    <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <SectionIcon className="w-5 h-5" />
+                    <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                      <SectionIcon className="w-5 h-5 relative z-10" />
+                      <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                     </span>
-                    <span className="uppercase text-sm tracking-widest">{section.title}</span>
-                    <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                    <span className="uppercase text-sm tracking-widest font-mono text-primary/90">{section.title}</span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                   </h3>
                   <div className="space-y-8">
                     {section.items.map((item) => (
@@ -288,13 +325,14 @@ export default function Viewer() {
 
             {/* Experience */}
             {(!cv.sections || cv.sections.length === 0) && cv.experience && cv.experience.length > 0 && (
-              <section>
+              <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                  <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Briefcase className="w-5 h-5" />
+                  <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                    <Briefcase className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   </span>
-                  <span className="uppercase text-sm tracking-widest">Experience</span>
-                  <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                  <span className="uppercase text-sm tracking-widest font-mono text-primary/90">Experience</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                 </h3>
                 <div className="space-y-8">
                   {cv.experience.map(exp => (
@@ -324,38 +362,39 @@ export default function Viewer() {
 
             {/* Projects */}
             {(!cv.sections || cv.sections.length === 0) && cv.projects && cv.projects.length > 0 && (
-              <section>
+              <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                  <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <LayoutTemplate className="w-5 h-5" />
+                  <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                    <LayoutTemplate className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   </span>
-                  <span className="uppercase text-sm tracking-widest">Projects</span>
-                  <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                  <span className="uppercase text-sm tracking-widest font-mono text-primary/90">Projects</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                 </h3>
                 <div className="space-y-8">
                   {cv.projects.map(proj => (
-                    <div key={proj.id}>
-                      <div className="flex flex-col sm:flex-row justify-between mb-2 sm:items-baseline">
-                        <h4 className="text-lg font-medium text-foreground">
+                    <div key={proj.id} className="group relative p-5 sm:p-6 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-[0_4px_24px_-8px_rgba(var(--color-primary),0.2)] hover:scale-[1.02] transition-all duration-300">
+                      <div className="flex flex-col sm:flex-row justify-between mb-3 sm:items-baseline">
+                        <h4 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                           {proj.name} 
                           {proj.role && <span className="text-muted font-normal text-base ml-2">| {proj.role}</span>}
                         </h4>
-                        <span className="text-sm text-muted tabular-nums whitespace-nowrap hidden sm:block">
+                        <span className="text-sm font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full tabular-nums whitespace-nowrap mt-2 sm:mt-0 w-fit">
                           {proj.date}
                         </span>
                       </div>
                       
                       {proj.tech && proj.tech.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
+                        <div className="flex flex-wrap gap-2 mb-4 mt-2">
                           {proj.tech.map((t, idx) => (
-                            <span key={idx} className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-xs font-semibold print:bg-transparent print:border print:border-gray-300">
+                            <span key={idx} className="px-2.5 py-1 bg-background border border-border/60 text-muted rounded-full text-xs font-semibold print:bg-transparent print:border print:border-gray-300">
                               {t}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      <ul className="list-disc list-outside ml-4 text-muted text-sm leading-relaxed whitespace-pre-line print:text-black space-y-1.5">
+                      <ul className="list-disc list-outside ml-4 text-muted text-sm leading-relaxed whitespace-pre-line print:text-black space-y-2 mt-4 marker:text-primary/50">
                         {proj.bulletPoints?.map((point, idx) => (
                           <li key={idx} className="pl-1">{point}</li>
                         ))}
@@ -368,13 +407,14 @@ export default function Viewer() {
 
             {/* Education */}
             {(!cv.sections || cv.sections.length === 0) && cv.education && cv.education.length > 0 && (
-              <section>
+              <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                  <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <GraduationCap className="w-5 h-5" />
+                  <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                    <GraduationCap className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   </span>
-                  <span className="uppercase text-sm tracking-widest">Education</span>
-                  <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                  <span className="uppercase text-sm tracking-widest font-mono text-primary/90">Education</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                 </h3>
                 <div className="space-y-6">
                   {cv.education.map(edu => (
@@ -402,21 +442,22 @@ export default function Viewer() {
 
             {/* Skills */}
             {(!cv.sections || cv.sections.length === 0) && cv.skills && (cv.skills.languages?.length > 0 || cv.skills.tools?.length > 0) && (
-              <section>
+              <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                  <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Wrench className="w-5 h-5" />
+                  <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                    <Wrench className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   </span>
-                  <span className="uppercase text-sm tracking-widest">Skills</span>
-                  <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                  <span className="uppercase text-sm tracking-widest font-mono text-primary/90">Skills</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                 </h3>
                 <div className="space-y-4">
                   {cv.skills.languages && cv.skills.languages.length > 0 && (
                     <div>
                       <h4 className="text-sm font-semibold text-muted mb-2 uppercase tracking-wide">Languages</h4>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 sm:gap-3">
                         {cv.skills.languages.map((skill, index) => (
-                          <span key={index} className="px-3 py-1 bg-background border border-border rounded-md text-sm font-medium text-foreground print:bg-transparent print:border-gray-400 print:text-black">
+                          <span key={index} className="px-3.5 py-1.5 bg-background border border-border/70 rounded-full text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary hover:shadow-[0_0_12px_rgba(var(--color-primary),0.15)] transition-all cursor-default print:bg-transparent print:border-gray-400 print:text-black">
                             {skill}
                           </span>
                         ))}
@@ -424,11 +465,11 @@ export default function Viewer() {
                     </div>
                   )}
                   {cv.skills.tools && cv.skills.tools.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-muted mb-2 uppercase tracking-wide">Tools & Technologies</h4>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mt-6">
+                      <h4 className="text-sm font-semibold text-muted mb-3 uppercase tracking-wider">Tools & Technologies</h4>
+                      <div className="flex flex-wrap gap-2 sm:gap-3">
                         {cv.skills.tools.map((skill, index) => (
-                          <span key={index} className="px-3 py-1 bg-background border border-border rounded-md text-sm font-medium text-foreground print:bg-transparent print:border-gray-400 print:text-black">
+                          <span key={index} className="px-3.5 py-1.5 bg-background border border-border/70 rounded-full text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary hover:shadow-[0_0_12px_rgba(var(--color-primary),0.15)] transition-all cursor-default print:bg-transparent print:border-gray-400 print:text-black">
                             {skill}
                           </span>
                         ))}
@@ -453,13 +494,14 @@ export default function Viewer() {
 
             {/* Certifications Base UI */}
             {(!cv.sections || cv.sections.length === 0) && cv.certifications && cv.certifications.length > 0 && (
-              <section>
+              <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
-                  <span className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Award className="w-5 h-5" />
+                  <span className="relative flex items-center justify-center bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 shadow-[0_0_10px_rgba(var(--color-primary),0)] group-hover:shadow-[0_0_15px_rgba(var(--color-primary),0.4)]">
+                    <Award className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 border border-primary/30 rounded-lg group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   </span>
-                  <span className="uppercase text-sm tracking-widest">Certifications</span>
-                  <div className="flex-1 h-px bg-border/60 ml-4 print:bg-gray-300"></div>
+                  <span className="uppercase text-sm tracking-widest font-mono text-primary/90">Certifications</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent ml-4 print:bg-gray-300"></div>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {cv.certifications.map(cert => (

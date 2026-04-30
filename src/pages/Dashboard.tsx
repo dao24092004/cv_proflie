@@ -42,13 +42,38 @@ export default function Dashboard() {
     downloadAnchorNode.remove();
   };
 
-  const copyShareLink = (cv: CVData) => {
+  const copyShareLink = async (cv: CVData) => {
     const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(cv));
-    const url = `${window.location.origin}/cv?data=${compressed}`;
-    navigator.clipboard.writeText(url).then(() => {
+    let baseUrl = window.location.origin;
+    const url = `${baseUrl}/cv?data=${compressed}`;
+    
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        setCopiedId(cv.id);
+        setTimeout(() => setCopiedId(null), 2000);
+        return;
+      }
+    } catch (err) {}
+
+    // Fallback for iframes or non-secure contexts
+    const textArea = document.createElement("textarea");
+    textArea.value = url;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
       setCopiedId(cv.id);
       setTimeout(() => setCopiedId(null), 2000);
-    });
+    } catch (err2) {
+      console.error("Failed to copy link", err2);
+      alert("Please copy this link manually:\n\n" + url);
+    }
+    textArea.remove();
   };
 
   const generateTemplate = () => {
@@ -191,28 +216,29 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cvs.map(cv => (
-            <div key={cv.id} className="group relative bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/30">
-              <div className="mb-4">
-                <h3 className="font-semibold text-lg text-foreground truncate" title={cv.cvName}>{cv.cvName}</h3>
+            <div key={cv.id} className="group relative bg-card border border-border/60 rounded-2xl p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/40 hover:-translate-y-1 glass-effect overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-125"></div>
+              <div className="mb-4 relative z-10">
+                <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors" title={cv.cvName}>{cv.cvName}</h3>
                 <p className="text-muted text-sm mt-1">{cv.personalInfo.title}</p>
-                <div className="mt-4 text-xs text-muted">
+                <div className="mt-5 text-[11px] uppercase tracking-wider text-muted font-medium bg-background w-fit px-2 py-0.5 rounded border border-border/50">
                   Updated: {new Date(cv.lastUpdated).toLocaleDateString()}
                 </div>
               </div>
               
-              <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
+              <div className="flex items-center justify-between pt-5 border-t border-border/50 mt-5 relative z-10">
                 <Link 
                   to={`/cv/${cv.id}`}
-                  className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover bg-primary/5 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   View
                 </Link>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button 
                     onClick={() => copyShareLink(cv)}
-                    className="p-2 text-muted hover:text-foreground rounded-md hover:bg-background transition-colors"
+                    className="p-2 text-muted hover:text-primary rounded-lg hover:bg-primary/10 transition-colors"
                     title="Copy Share Link"
                   >
                     {copiedId === cv.id ? (
@@ -223,14 +249,14 @@ export default function Dashboard() {
                   </button>
                   <button 
                     onClick={() => exportJSON(cv)}
-                    className="p-2 text-muted hover:text-foreground rounded-md hover:bg-background transition-colors"
+                    className="p-2 text-muted hover:text-foreground rounded-lg hover:bg-background transition-colors"
                     title="Export JSON"
                   >
                     <Download className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => deleteCV(cv.id)}
-                    className="p-2 text-red-600/70 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="p-2 text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                     title="Delete CV"
                   >
                     <Trash2 className="w-4 h-4" />
