@@ -15,10 +15,11 @@ export default function Viewer() {
   const [cv, setCv] = useState<CVData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light-futuristic' | 'dark-tech' | 'glass-minimal' | string>('dark-tech');
+  
+  // Đã thiết lập mặc định luôn là 'bento'
   const [layoutMode, setLayoutMode] = useState<'a4' | 'bento'>('bento');
   
   useEffect(() => {
-    // Load saved theme
     const savedTheme = localStorage.getItem('cv-hub-theme');
     const validThemes = ['light-futuristic', 'dark-tech', 'glass-minimal'];
     if (savedTheme && validThemes.includes(savedTheme)) {
@@ -31,7 +32,6 @@ export default function Viewer() {
     localStorage.setItem('cv-hub-theme', theme);
   }, [theme]);
 
-  // Logic lấy dữ liệu từ URL đã cập nhật (Hỗ trợ URL Hash)
   useEffect(() => {
     const hash = window.location.hash;
     const hashData = hash.startsWith('#data=') ? hash.replace('#data=', '') : null;
@@ -98,7 +98,7 @@ export default function Viewer() {
 
   return (
     <div className="min-h-screen bg-background relative text-foreground pb-20 print:bg-white print:text-black">
-      {/* Subtle technological background grid */}
+      {/* Màn lưới background */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20 print:hidden" 
            style={{ 
              backgroundImage: 'linear-gradient(to right, var(--border-color) 1px, transparent 1px), linear-gradient(to bottom, var(--border-color) 1px, transparent 1px)', 
@@ -108,7 +108,7 @@ export default function Viewer() {
            }}>
       </div>
       
-      {/* Floating Controls - Hidden in print */}
+      {/* Menu nổi */}
       <div className="fixed top-4 left-4 right-4 z-50 flex justify-between items-center pointer-events-none print:hidden">
         <button 
           onClick={() => navigate('/')}
@@ -153,28 +153,39 @@ export default function Viewer() {
       {/* Main Content Area */}
       <div className={cn("relative z-10 mx-auto mt-24 print:mt-0 px-4 sm:px-8 pb-12 transition-all duration-500", layoutMode === 'bento' ? "max-w-7xl" : "max-w-4xl")}>
         <div className={cn("transition-all duration-500 relative", layoutMode === 'bento' ? "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start" : "theme-card bg-card print:bg-white print:border-none border border-border shadow-md overflow-hidden backdrop-blur-md")}>
-          {/* Subtle top accent bar (only in A4 mode) */}
           {layoutMode === 'a4' && <div className="absolute top-0 left-0 right-0 h-2 bg-primary/80"></div>}
           
-          {/* Header Section */}
+          {/* HEADER CHÍNH ĐÃ FIX LAYOUT */}
           <header className={cn("relative overflow-hidden", layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 lg:col-span-4 lg:sticky lg:top-24 border border-border/60 shadow-lg backdrop-blur-xl" : "p-8 sm:p-12 sm:pb-10 border-b border-border/50")}>
-            {/* Tech scanner line animation over header */}
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent shadow-[0_0_8px_rgba(var(--color-primary),0.8)] animate-[scan_3s_ease-in-out_infinite] print:hidden"></div>
             
-            {/* Subtle glow effect behind header */}
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
             
-            <div className="flex flex-col-reverse sm:flex-row justify-between items-start gap-8 relative z-10">
-              <div className="flex-1">
-                <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground print:text-black pb-1">
+            <div className={cn(
+              "flex relative z-10",
+              layoutMode === 'bento' 
+                ? "flex-col-reverse items-center text-center lg:items-start lg:text-left gap-6 lg:gap-8" 
+                : "flex-col-reverse sm:flex-row justify-between items-center sm:items-start gap-8"
+            )}>
+              <div className={cn("flex-1", layoutMode === 'bento' ? "w-full" : "")}>
+                <h1 className={cn(
+                  "font-extrabold tracking-tight text-foreground print:text-black pb-1",
+                  layoutMode === 'bento' ? "text-3xl sm:text-4xl xl:text-5xl" : "text-4xl sm:text-5xl"
+                )}>
                   {cv.personalInfo.name}
                 </h1>
-                <h2 className="text-xl sm:text-2xl mt-1 font-medium text-primary print:text-gray-800">
+                <h2 className={cn(
+                  "mt-1 font-medium text-primary print:text-gray-800",
+                  layoutMode === 'bento' ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"
+                )}>
                   {cv.personalInfo.title}
                 </h2>
                 
-                <div className="flex flex-wrap gap-x-6 gap-y-3 mt-6 text-sm text-muted print:text-gray-600">
+                <div className={cn(
+                  "flex flex-wrap gap-x-6 gap-y-3 mt-6 text-sm text-muted print:text-gray-600",
+                  layoutMode === 'bento' ? "justify-center lg:justify-start" : ""
+                )}>
                   {cv.personalInfo.email && (
                     <span className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-default">
                       <Mail className="w-4 h-4 text-primary/70" />
@@ -202,15 +213,18 @@ export default function Viewer() {
                 </div>
               </div>
               
-              {/* PHẦN HIỂN THỊ ẢNH ĐÃ ĐƯỢC CẬP NHẬT */}
+              {/* PHẦN ẢNH ĐÃ FIX TỶ LỆ CHUẨN (ASPECT 3:4) */}
               {cv.personalInfo.photo && (
-                <div className="relative group w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 mt-2 sm:mt-0">
+                <div className={cn(
+                  "relative group flex-shrink-0",
+                  layoutMode === 'bento' ? "w-32 sm:w-44 aspect-[3/4]" : "w-28 sm:w-36 aspect-[3/4]"
+                )}>
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-colors duration-500"></div>
                   <div className="relative w-full h-full rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.15)] bg-card">
                     <img 
                       src={cv.personalInfo.photo} 
                       alt={cv.personalInfo.name} 
-                      className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700" 
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" 
                     />
                     <div className="absolute inset-0 ring-1 ring-inset ring-primary/20 rounded-2xl pointer-events-none"></div>
                     {/* Tech corner accents */}
@@ -231,9 +245,8 @@ export default function Viewer() {
             )}
           </header>
 
+          {/* DYNAMIC SECTIONS */}
           <div className={cn("", layoutMode === 'bento' ? "lg:col-span-8 space-y-6" : "p-8 sm:p-12 space-y-12")}>
-
-            {/* Dynamic Sections from the new exhaustive structure */}
             {cv.sections && cv.sections.map((section) => {
               let SectionIcon = Layers;
               if (section.id.toLowerCase().includes('experience')) SectionIcon = Briefcase;
@@ -255,7 +268,6 @@ export default function Viewer() {
                   <div className="space-y-8">
                     {section.items.map((item) => (
                       <div key={item.id} className="relative pl-4 sm:pl-0">
-                        {/* Timeline line - hidden on very small screens if we want, or keep it. Let's make a subtle left border to group items */}
                         <div className="absolute left-0 top-2 bottom-0 w-px bg-border sm:hidden"></div>
                         
                         {(item.title || item.subtitle || item.date) && (
@@ -284,7 +296,6 @@ export default function Viewer() {
                           />
                         )}
                         
-                        {/* Inline Certificate Preview */}
                         {item.url && item.type && (
                           <div className="mt-4 print:hidden">
                             {item.type.toLowerCase() === 'image' || item.url.match(/\.(jpeg|jpg|gif|png|svg)(\?.*)?$/i) ? (
@@ -333,8 +344,6 @@ export default function Viewer() {
             })}
 
             {/* Legacy Fallbacks below for older templates without `sections` array */}
-
-            {/* Experience */}
             {(!cv.sections || cv.sections.length === 0) && cv.experience && cv.experience.length > 0 && (
               <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
@@ -371,7 +380,6 @@ export default function Viewer() {
               </section>
             )}
 
-            {/* Projects */}
             {(!cv.sections || cv.sections.length === 0) && cv.projects && cv.projects.length > 0 && (
               <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
@@ -416,7 +424,6 @@ export default function Viewer() {
               </section>
             )}
 
-            {/* Education */}
             {(!cv.sections || cv.sections.length === 0) && cv.education && cv.education.length > 0 && (
               <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
@@ -451,7 +458,6 @@ export default function Viewer() {
               </section>
             )}
 
-            {/* Skills */}
             {(!cv.sections || cv.sections.length === 0) && cv.skills && (cv.skills.languages?.length > 0 || cv.skills.tools?.length > 0) && (
               <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
@@ -503,7 +509,6 @@ export default function Viewer() {
               </section>
             )}
 
-            {/* Certifications Base UI */}
             {(!cv.sections || cv.sections.length === 0) && cv.certifications && cv.certifications.length > 0 && (
               <section className={cn(layoutMode === 'bento' ? "theme-card bg-card p-6 sm:p-8 border border-border shadow-sm backdrop-blur-md" : "")}>
                 <h3 className="flex items-center gap-3 text-xl font-bold mb-6 text-foreground tracking-wide print:text-black group">
