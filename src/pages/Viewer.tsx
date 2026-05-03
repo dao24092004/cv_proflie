@@ -31,11 +31,16 @@ export default function Viewer() {
     localStorage.setItem('cv-hub-theme', theme);
   }, [theme]);
 
+  // Logic lấy dữ liệu từ URL đã cập nhật (Hỗ trợ URL Hash)
   useEffect(() => {
-    const dataParam = searchParams.get('data');
-    if (dataParam) {
+    const hash = window.location.hash;
+    const hashData = hash.startsWith('#data=') ? hash.replace('#data=', '') : null;
+    const queryData = searchParams.get('data');
+    const compressedData = hashData || queryData;
+
+    if (compressedData) {
       try {
-        const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
+        const decompressed = LZString.decompressFromEncodedURIComponent(compressedData);
         if (decompressed) {
           setCv(JSON.parse(decompressed));
         } else {
@@ -196,15 +201,21 @@ export default function Viewer() {
                   ))}
                 </div>
               </div>
+              
+              {/* PHẦN HIỂN THỊ ẢNH ĐÃ ĐƯỢC CẬP NHẬT */}
               {cv.personalInfo.photo && (
                 <div className="relative group w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 mt-2 sm:mt-0">
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-colors duration-500"></div>
-                  <div className="relative w-full h-full rounded-2xl overflow-hidden glass-effect border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.15)]">
-                    <img src={cv.personalInfo.photo} alt={cv.personalInfo.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 mix-blend-luminosity hover:mix-blend-normal" />
-                    <div className="absolute inset-0 ring-1 ring-inset ring-primary/20 rounded-2xl"></div>
+                  <div className="relative w-full h-full rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.15)] bg-card">
+                    <img 
+                      src={cv.personalInfo.photo} 
+                      alt={cv.personalInfo.name} 
+                      className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700" 
+                    />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-primary/20 rounded-2xl pointer-events-none"></div>
                     {/* Tech corner accents */}
-                    <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary/60"></div>
-                    <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary/60"></div>
+                    <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary/60 pointer-events-none"></div>
+                    <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary/60 pointer-events-none"></div>
                   </div>
                 </div>
               )}

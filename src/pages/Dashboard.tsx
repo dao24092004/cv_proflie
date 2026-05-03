@@ -45,7 +45,9 @@ export default function Dashboard() {
   const copyShareLink = async (cv: CVData) => {
     const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(cv));
     let baseUrl = window.location.origin;
-    const url = `${baseUrl}/cv?data=${compressed}`;
+    
+    // Đã thay đổi: Sử dụng Hash (#) thay vì Query Parameter (?) để tránh lỗi 431
+    const url = `${baseUrl}/cv#data=${compressed}`;
     
     try {
       if (navigator.clipboard && window.isSecureContext) {
